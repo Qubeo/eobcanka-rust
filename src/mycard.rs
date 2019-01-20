@@ -10,7 +10,34 @@ pub struct MyCard {
     //pub mut reader:
 }
 
+// Instruction code constants etc.
 impl MyCard {
+    
+    pub const TAG_ID_CARD_NUMBER: u8 = 1;
+    pub const TAG_ID_CERTIFICATE_SERIAL_NUMBER: u8 = 2; // Q: Why 2 and not 0x02?
+    pub const TAG_ID_KEY_KCV: u8 = 0xC0;
+    pub const TAG_ID_KEY_COUNTER: u8 = 0xC1;
+
+    pub const TAG_ID_DOK_STATE: u8 = 0x8B;
+    pub const TAG_ID_DOK_TRY_LIMIT: u8 = 0x8C;
+    pub const TAG_ID_DOK_MAX_TRY_LIMIT: u8 = 0x8D;
+
+    pub const TAG_ID_IOK_STATE: u8 = 0x82;
+    pub const TAG_ID_IOK_TRY_LIMIT: u8 = 0x83;
+    pub const TAG_ID_IOK_MAX_TRY_LIMIT: u8 = 0x84;
+
+    // Q: Why are those private in Java?
+    pub const APP_ID_CARD_MANAGEMENT: [u8; 9] =
+        [0xD2, 0x03, 0x10, 0x01, 0x00, 0x01, 0x00, 0x02, 0x02];
+    pub const APP_ID_FILE_MANAGEMENT: [u8; 10] =
+        [0xD2, 0x03, 0x10, 0x01, 0x00, 0x01, 0x03, 0x02, 0x01, 0x00];
+
+    pub const FILE_ID_CERTIFICATE_AUTHORIZATION: u32 = 0x0132; // Q: Does the int size matter, beyond satisfying the minimal needed size?
+    pub const FILE_ID_CERTIFICATE_IDENTIFICATION: u32 = 0x0001;
+}
+
+impl MyCard {
+
     pub fn new() -> MyCard {
         //let app = Application { app_id: mycard::MyCard::APP_ID_CARD_MANAGEMENT.to_vec() };
         // let current_application: Vec<u8> = mycard::MyCard::APP_ID_CARD_MANAGEMENT.to_vec();
@@ -34,12 +61,13 @@ impl MyCard {
         };
 
         // Use the first reader.
+        // TODO: Fix the error handling
         let reader = readers.next().unwrap();
         /* let reader = match readers.next() {
             Some(reader) => reader,
             None => {
                 println!("No readers are connected.");
-                return _;
+                return
             }
         }; */
 
@@ -54,7 +82,7 @@ impl MyCard {
             Ok(card) => card,
             Err(Error::NoSmartcard) => {
                 println!("A smartcard is not present in the reader.");
-                return !;
+                return;
             }
             Err(err) => {
                 eprintln!("Failed to connect to card: {}", err);
@@ -68,27 +96,7 @@ impl MyCard {
         };
     }
 
-    pub const TAG_ID_CARD_NUMBER: u8 = 1;
-    pub const TAG_ID_CERTIFICATE_SERIAL_NUMBER: u8 = 2; // Q: Why 2 and not 0x02?
-    pub const TAG_ID_KEY_KCV: u8 = 0xC0;
-    pub const TAG_ID_KEY_COUNTER: u8 = 0xC1;
 
-    pub const TAG_ID_DOK_STATE: u8 = 0x8B;
-    pub const TAG_ID_DOK_TRY_LIMIT: u8 = 0x8C;
-    pub const TAG_ID_DOK_MAX_TRY_LIMIT: u8 = 0x8D;
-
-    pub const TAG_ID_IOK_STATE: u8 = 0x82;
-    pub const TAG_ID_IOK_TRY_LIMIT: u8 = 0x83;
-    pub const TAG_ID_IOK_MAX_TRY_LIMIT: u8 = 0x84;
-
-    // Q: Why are those private in Java?
-    pub const APP_ID_CARD_MANAGEMENT: [u8; 9] =
-        [0xD2, 0x03, 0x10, 0x01, 0x00, 0x01, 0x00, 0x02, 0x02];
-    pub const APP_ID_FILE_MANAGEMENT: [u8; 10] =
-        [0xD2, 0x03, 0x10, 0x01, 0x00, 0x01, 0x03, 0x02, 0x01, 0x00];
-
-    pub const FILE_ID_CERTIFICATE_AUTHORIZATION: u32 = 0x0132; // Q: Does the int size matter, beyond satisfying the minimal needed size?
-    pub const FILE_ID_CERTIFICATE_IDENTIFICATION: u32 = 0x0001;
 
     pub fn get_SW(&self, buffer: &Vec<u8>) -> Vec<u8> {
 
@@ -175,7 +183,9 @@ impl MyCard {
 
     pub fn select_application(&self, app_id: Vec<u8>) -> bool {
 
-        let cmd_select_applet_mgmt = [0x00, 0xA4, 0x04, 0x0C, 0x09, 0xD2, 0x03, 0x10, 0x01, 0x00, 0x01, 0x00, 0x02, 0x02];        
+        // TODO: Pozor - zatím nereflektujeme app_id argument!
+        let cmd_select_applet_mgmt = [0x00, 0xA4, 0x04, 0x0C, 0x09, 0xD2, 0x03, 0x10, 0x01, 0x00, 0x01, 0x00, 0x02, 0x02];      
+        //let cmd_select_applet_file = [0x00, 0xA4, 0x04, 0x0C, 0x09, 0xD2, 0x03, 0x10, 0x01, 0x00, 0x01, 0x03, 0x02, 0x01, 0x00];  
         let mut result_apdu_buf = [0; MAX_BUFFER_SIZE];
         
         // let result_apdu = card.transmit(&cmd_select_applet_mgmt, &mut result_apdu_buf);
